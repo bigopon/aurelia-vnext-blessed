@@ -112,6 +112,9 @@ export class Aurelia {
       },
       configurable: true
     });
+    screen.key(['escape', 'q', 'C-c'], function(ch, key) {
+      return process.exit(0);
+    });
     return screen;
   }
 }

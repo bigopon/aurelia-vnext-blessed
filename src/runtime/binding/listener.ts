@@ -71,7 +71,7 @@ export class Listener implements IBinding {
 
     // should it be normalized in uicontrol
     // (this.target as any).onChanged(this.handleEvent);
-    this.target.addListener('keypress', this.handleEvent);
+    this.target.addListener(this.targetEvent, this.handleEvent);
 
     // this.handler = this.eventManager.addEventListener(
     //   this.target,

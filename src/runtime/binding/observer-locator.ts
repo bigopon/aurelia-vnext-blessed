@@ -16,7 +16,7 @@ import { PrimitiveObserver, SetterObserver } from './property-observation';
 import { getSetObserver } from './set-observer';
 import { ISVGAnalyzer } from './svg-analyzer';
 import { ClassAttributeAccessor, DataAttributeAccessor, ElementPropertyAccessor, PropertyAccessor, StyleAttributeAccessor, XLinkAttributeAccessor } from './target-accessors';
-import { BlessedDOM } from '../blessed-dom';
+import { BlessedDOM, IBlessedNode } from '../blessed-dom';
 import { BlessedInputObserver, BlessedCheckedObserver } from './libui-entry-observer';
 import { Widgets } from 'blessed';
 
@@ -91,6 +91,11 @@ export class ObserverLocator implements IObserverLocator {
   }
 
   public getAccessor(obj: IObservable, propertyName: string): IBindingTargetAccessor {
+    if (BlessedDOM.isNodeInstance(obj)) {
+      if (propertyName === 'text') {
+        return new BlessedTextPropertyAccessor(obj as Widgets.BlessedElement);
+      }
+    }
     if (DOM.isNodeInstance(obj)) {
       const tagName = obj['tagName'];
       // this check comes first for hot path optimization
@@ -166,10 +171,11 @@ export class ObserverLocator implements IObserverLocator {
     }
 
     if (BlessedDOM.isNodeInstance(obj)) {
-      if (obj.type === 'textbox' && propertyName === 'value') {
+      const type = obj.type;
+      if ((type === 'textbox' || type === 'textarea') && propertyName === 'value') {
         return new BlessedInputObserver(this.lifecycle, obj as Widgets.TextboxElement);
       }
-      if (obj.type === 'checkbox' && propertyName === 'checked') {
+      if (type === 'checkbox' && propertyName === 'checked') {
         return new BlessedCheckedObserver(this.lifecycle, obj as Widgets.CheckboxElement, this);
       }
     }
@@ -268,4 +274,20 @@ export function getCollectionObserver(lifecycle: ILifecycle, collection: IObserv
       return getSetObserver(lifecycle, <IObservedSet>collection);
   }
   return null;
+}
+
+
+interface BlessedTextPropertyAccessor extends IBindingTargetAccessor<IIndexable, string, Primitive | IIndexable> {}
+class BlessedTextPropertyAccessor implements PropertyAccessor {
+  propertyKey: string;
+  constructor(public obj: Widgets.BlessedElement) { }
+
+  public getValue(): Primitive | IIndexable {
+    return this.obj.getText();
+  }
+
+  public setValue(value: Primitive | IIndexable): void {
+    this.obj.setText(value as any);
+    this.obj.screen.render();
+  }
 }

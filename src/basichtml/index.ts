@@ -21,6 +21,7 @@ export { HTMLUnknownElement } from './HTMLUnknownElement';
 export { HTMLHtmlElement } from './HTMLHtmlElement';
 export { Node } from './Node';
 export { Text } from './Text';
+export { CSSStyleDeclaration } from './CSSStyleDeclaration';
 
 export interface IWindow {
   window: this;

@@ -426,7 +426,6 @@ function nodesToLibUiControls(nodes: Node | Node[], parent: IBlessedNode = null,
   for (let i = 0, ii = nodes.length; ii > i; ++i) {
     const node = nodes[i];
     let libUiControl: IBlessedNode | null = null;
-    console.log(node.nodeType);
     if (!node.nodeType) {
       throw new Error('No node type????');
     }

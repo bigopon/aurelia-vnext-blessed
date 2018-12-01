@@ -42,6 +42,7 @@ const _ = new WeakMap;
 export class CSSStyleDeclaration {
 
   cssText: string;
+  [style: string]: any;
 
   constructor() {
     _.set(this, {props: {}});

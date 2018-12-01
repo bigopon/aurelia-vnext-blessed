@@ -1,64 +1,101 @@
 import { Widgets } from 'blessed';
-import { Node } from '../basichtml';
+import { CSSStyleDeclaration, Node, Element, HTMLElement } from '../basichtml';
 import { BlessedDOM } from './blessed-dom';
 import * as blessed from 'blessed';
 
 (map => {
   const emptyOps = {};
-  map('label', (node?: Element) => {
-    const label = blessed.text(emptyOps);
-    if (node && (node.textContent || node.getAttribute('label'))) {
-      label.setText(node.getAttribute('label') || node.textContent);
-    }
-    return label;
-  });
-  map('button', (node?: Element) => {
-    const btn = blessed.button({})
-    if (node) {
-      if (node.getAttribute('text')) {
-        btn.setText(node.getAttribute('text'));
-      }
-      if (node.textContent) {
-        btn.setText(node.getAttribute('text'));
-      }
-    }
-    return btn;
-  });
-  map('textbox', (node?: Element) => {
-    const textbox = blessed.textbox(emptyOps);
-    if (node) {
-      if (node.getAttribute('text')) {
-        textbox.setText(node.getAttribute('text'));
-      }
-      if (node.textContent) {
-        textbox.setText(node.getAttribute('text'));
-      }
-    }
-    return textbox;
-  });
-  map('box', (node?: Element) => {
-    const box = blessed.box({
-      top: 'center',
-      left: 'center',
-      width: node && node.getAttribute('width') || '100%',
-      height: node && node.getAttribute('height') || '100%',
-      content: 'Hello {bold}world{/bold}!',
-      tags: true,
-      border: {
-        type: 'line'
-      },
-      style: {
-        fg: 'white',
-        bg: 'magenta',
-        border: {
-          fg: '#f0f0f0'
-        },
-        hover: {
-          bg: 'green'
-        }
+  const dimensionProps: ('top' | 'left' | 'width' | 'height')[] = ['top', 'left', 'width', 'height'];
+  function transferDimension(opts: Widgets.ElementOptions, node: Element) {
+    dimensionProps.forEach(prop => {
+      const value = node.getAttribute(prop);
+      if (value) {
+        const num = Number(value);
+        opts[prop] = num ? num : value;
       }
     });
-    return box;
+    return opts;
+  }
+  function transferContent(opts: Widgets.ElementOptions, node: Element) {
+    ['content', 'text'].forEach(prop => {
+      const contentOrText = node.getAttribute(prop);
+      if (contentOrText) {
+        opts[prop] = contentOrText;
+      }
+    });
+    return opts;
+  }
+  function transferBooleans(opts: Widgets.ElementOptions, node: Element) {
+    ['keys', 'mouse'].forEach(prop => {
+      if (node.hasAttribute(prop)) {
+        opts[prop] = true;
+      }
+    });
+    if (node.hasAttribute('input-on-focus')) {
+      opts['inputOnFocus'] = true;
+    }
+    return opts;
+  }
+  function transferStyles(opts: Widgets.ElementOptions, node: Element) {
+    const style = (node as HTMLElement).style || (node.getAttributeNode('style') as any as CSSStyleDeclaration);
+    if (style) {
+      const optsStyle = opts.style = opts.style || {};
+      const background = style.bg;
+      if (background) {
+        optsStyle.bg = background;
+      }
+      const focus = style['bg.focus'];
+      if (focus) {
+        optsStyle.focus = { bg: focus };
+      }
+      const border = node.getAttribute('border');
+      if (border && (border === 'line' || border === 'bg')) {
+        opts.border = border;
+      }
+    }
+  }
+  function transferName(opts: Widgets.ElementOptions, node: Element) {
+    const name = node.getAttribute('name');
+    if (name) {
+      opts.name = name;
+    }
+  }
+  function createOpts(node?: Element, opts: Widgets.ElementOptions = {}): Widgets.ElementOptions {
+    if (node) {
+      transferDimension(opts, node);
+      transferContent(opts, node);
+      transferBooleans(opts, node);
+      transferStyles(opts, node);
+      transferName(opts, node);
+    }
+    return opts;
+  }
+  map('label', (node?: Element) => {
+    return blessed.text(createOpts(node));
+  });
+  map('button', (node?: Element) => {
+    return blessed.button(createOpts(node));
+  });
+  map('textbox', (node?: Element) => {
+    return blessed.textbox(createOpts(node));
+  });
+  map('textarea', (node?: Element) => {
+    return blessed.textarea(createOpts(node));
+  });
+  map('checkbox', (node?: Element) => {
+    return blessed.checkbox(createOpts(node));
+  });
+  map('radio', (node?: Element) => {
+    return blessed.radiobutton(createOpts(node));
+  });
+  map('radioset', (node?: Element) => {
+    return blessed.radioset(createOpts(node));
+  });
+  map('box', (node?: Element) => {
+    return blessed.box(createOpts(node));
+  });
+  map('form', (node?: Element) => {
+    return blessed.form(createOpts(node));
   });
   // map('ui-form', () => new UiForm());
   // map('ui-entry', () => new UiEntry());
